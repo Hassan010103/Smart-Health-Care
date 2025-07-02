@@ -25,6 +25,8 @@ import VideoCallPage from './pages/VideoCallPage';
 import ConsultationDetailPage from './pages/ConsultationDetailPage';
 import { AuthProvider, useAuth } from './components/AuthContext';
 
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+
 function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [isAdminLoggedIn, setIsAdminLoggedIn] = useState(false);
@@ -50,7 +52,7 @@ function App() {
 
   // Fetch doctors and treatments (public)
   const fetchDoctors = async () => {
-    const res = await fetch('http://localhost:5000/api/doctors');
+    const res = await fetch(`${API_BASE_URL}/doctors`);
     const data = await res.json();
     setDoctors(data.map((doc: any) => ({
       ...doc,
@@ -58,7 +60,7 @@ function App() {
     })));
   };
   const fetchTreatments = async () => {
-    const res = await fetch('http://localhost:5000/api/treatments');
+    const res = await fetch(`${API_BASE_URL}/treatments`);
     const data = await res.json();
     setTreatments(data.map((t: any) => ({
       ...t,
@@ -68,7 +70,7 @@ function App() {
   // Fetch appointments (protected)
   const fetchAppointments = async () => {
     if (!token) return setAppointments([]);
-    const res = await fetch('http://localhost:5000/api/appointments', {
+    const res = await fetch(`${API_BASE_URL}/appointments`, {
       headers: { Authorization: `Bearer ${token}` },
     });
     if (res.ok) {
@@ -89,7 +91,7 @@ function App() {
 
   const fetchPayments = async () => {
     if (!token) return setPayments([]);
-    const res = await fetch('http://localhost:5000/api/payments', {
+    const res = await fetch(`${API_BASE_URL}/payments`, {
       headers: { Authorization: `Bearer ${token}` },
     });
     if (res.ok) {
@@ -103,7 +105,7 @@ function App() {
   const createPayment = async (appointmentId: string, amount: number) => {
     if (!token) return alert('You must be logged in.');
     try {
-      const res = await fetch('http://localhost:5000/api/payments', {
+      const res = await fetch(`${API_BASE_URL}/payments`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -125,7 +127,7 @@ function App() {
   const updatePaymentStatus = async (id: string, status: string) => {
     if (!token) return alert('You must be logged in as admin.');
     try {
-      const res = await fetch(`http://localhost:5000/api/payments/${id}/status`, {
+      const res = await fetch(`${API_BASE_URL}/payments/${id}/status`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
@@ -191,7 +193,7 @@ function App() {
     setAdminLoginError(null);
     setAdminLoginLoading(true);
     try {
-      const res = await fetch('http://localhost:5000/api/auth/login', {
+      const res = await fetch(`${API_BASE_URL}/auth/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email: adminEmail, password: adminPassword }),
@@ -235,7 +237,7 @@ function App() {
   const addDoctor = async (doctor: Omit<Doctor, 'id' | 'rating' | 'reviews' | 'bio' | 'qualifications' | 'availability'>) => {
     if (!token) return alert('You must be logged in as admin.');
     try {
-      const res = await fetch('http://localhost:5000/api/doctors', {
+      const res = await fetch(`${API_BASE_URL}/doctors`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -262,7 +264,7 @@ function App() {
   const addTreatment = async (treatment: Omit<Treatment, 'id'>) => {
     if (!token) return alert('You must be logged in as admin.');
     try {
-      const res = await fetch('http://localhost:5000/api/treatments', {
+      const res = await fetch(`${API_BASE_URL}/treatments`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -298,7 +300,7 @@ function App() {
       date.setMinutes(parseInt(minute));
       date.setSeconds(0);
       date.setMilliseconds(0);
-      const res = await fetch('http://localhost:5000/api/appointments', {
+      const res = await fetch(`${API_BASE_URL}/appointments`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -324,7 +326,7 @@ function App() {
   const cancelAppointment = async (appointmentId: string) => {
     if (!token) return alert('You must be logged in.');
     try {
-      const res = await fetch(`http://localhost:5000/api/appointments/${appointmentId}`, {
+      const res = await fetch(`${API_BASE_URL}/appointments/${appointmentId}`, {
         method: 'DELETE',
         headers: { Authorization: `Bearer ${token}` },
       });
@@ -345,7 +347,7 @@ function App() {
   const editDoctor = async (id: string, updates: Partial<Doctor>) => {
     if (!token) return alert('You must be logged in as admin.');
     try {
-      const res = await fetch(`http://localhost:5000/api/doctors/${id}`, {
+      const res = await fetch(`${API_BASE_URL}/doctors/${id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -367,7 +369,7 @@ function App() {
   const deleteDoctor = async (id: string) => {
     if (!token) return alert('You must be logged in as admin.');
     try {
-      const res = await fetch(`http://localhost:5000/api/doctors/${id}`, {
+      const res = await fetch(`${API_BASE_URL}/doctors/${id}`, {
         method: 'DELETE',
         headers: { Authorization: `Bearer ${token}` },
       });
@@ -385,7 +387,7 @@ function App() {
   const editTreatment = async (id: string, updates: Partial<Treatment>) => {
     if (!token) return alert('You must be logged in as admin.');
     try {
-      const res = await fetch(`http://localhost:5000/api/treatments/${id}`, {
+      const res = await fetch(`${API_BASE_URL}/treatments/${id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -407,7 +409,7 @@ function App() {
   const deleteTreatment = async (id: string) => {
     if (!token) return alert('You must be logged in as admin.');
     try {
-      const res = await fetch(`http://localhost:5000/api/treatments/${id}`, {
+      const res = await fetch(`${API_BASE_URL}/treatments/${id}`, {
         method: 'DELETE',
         headers: { Authorization: `Bearer ${token}` },
       });
@@ -440,7 +442,7 @@ function App() {
     await loadRazorpayScript();
     try {
       // 1. Create Razorpay order from backend
-      const res = await fetch('http://localhost:5000/api/payments/razorpay/order', {
+      const res = await fetch(`${API_BASE_URL}/payments/razorpay/order`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

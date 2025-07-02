@@ -20,10 +20,12 @@ const ConsultationDetailPage: React.FC<ConsultationDetailPageProps> = ({ appoint
   const [reviewSubmitting, setReviewSubmitting] = useState(false);
   const [reviewSuccess, setReviewSuccess] = useState(false);
 
+  const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+
   useEffect(() => {
     if (!id || !token) return;
     setLoading(true);
-    fetch(`http://localhost:5000/api/appointments/${id}`, {
+    fetch(`${API_BASE_URL}/appointments/${id}`, {
       headers: { Authorization: `Bearer ${token}` },
     })
       .then(res => res.ok ? res.json() : Promise.reject(res))
@@ -127,7 +129,7 @@ const ConsultationDetailPage: React.FC<ConsultationDetailPageProps> = ({ appoint
                     setReviewSubmitting(true);
                     setReviewSuccess(false);
                     try {
-                      const res = await fetch(`http://localhost:5000/api/doctors/${appointment.doctorId || appointment.doctorName}/reviews`, {
+                      const res = await fetch(`${API_BASE_URL}/doctors/${appointment.doctorId || appointment.doctorName}/reviews`, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
                         body: JSON.stringify({ rating: reviewRating, comment: reviewComment }),

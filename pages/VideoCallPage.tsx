@@ -28,6 +28,9 @@ const VideoCallPage: React.FC<VideoCallPageProps> = ({ appointments, token }) =>
   const [error, setError] = useState<string | null>(null);
   const [timer, setTimer] = useState(0);
 
+  const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+  const SOCKET_URL = API_BASE_URL.replace('/api', '');
+
   useEffect(() => {
     const found = appointments.find(a => String(a.id) === String(id));
     if (found) {
@@ -35,7 +38,7 @@ const VideoCallPage: React.FC<VideoCallPageProps> = ({ appointments, token }) =>
       setLoading(false);
     } else if (id && (token || authToken)) {
       setLoading(true);
-      fetch(`http://localhost:5000/api/appointments/${id}`, {
+      fetch(`${API_BASE_URL}/appointments/${id}`, {
         headers: { Authorization: `Bearer ${token || authToken}` },
       })
         .then(res => res.ok ? res.json() : Promise.reject(res))
@@ -96,7 +99,7 @@ const VideoCallPage: React.FC<VideoCallPageProps> = ({ appointments, token }) =>
   useEffect(() => {
     if (!appointment || !token) return;
     console.log('[VideoCallPage] Connecting to Socket.io with token:', token);
-    const socket = io('http://localhost:5000', { auth: { token } });
+    const socket = io(SOCKET_URL, { auth: { token } });
     socketRef.current = socket;
     socket.on('connect', () => {
       socket.emit('join', { appointmentId: appointment.id });

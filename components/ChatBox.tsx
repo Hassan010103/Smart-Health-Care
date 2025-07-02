@@ -21,11 +21,14 @@ const ChatBox: React.FC<ChatBoxProps> = ({ appointmentId, token }) => {
   const socketRef = useRef<Socket | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
+  const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+  const SOCKET_URL = API_BASE_URL.replace('/api', '');
+
   // Fetch chat history
   useEffect(() => {
     if (!appointmentId || !token) return;
     setLoading(true);
-    fetch(`http://localhost:5000/api/chat/${appointmentId}`, {
+    fetch(`${API_BASE_URL}/chat/${appointmentId}`, {
       headers: { Authorization: `Bearer ${token}` },
     })
       .then(res => res.ok ? res.json() : Promise.reject(res))
@@ -43,7 +46,7 @@ const ChatBox: React.FC<ChatBoxProps> = ({ appointmentId, token }) => {
   useEffect(() => {
     if (!appointmentId || !token) return;
     console.log('[ChatBox] Connecting to Socket.io with token:', token);
-    const socket = io('http://localhost:5000', { auth: { token } });
+    const socket = io(SOCKET_URL, { auth: { token } });
     socketRef.current = socket;
     socket.on('connect', () => {
       socket.emit('join', { appointmentId });

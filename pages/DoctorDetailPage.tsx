@@ -36,9 +36,11 @@ const DoctorDetailPage: React.FC<DoctorDetailPageProps> = ({ doctors, isLoggedIn
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [reviews, setReviews] = useState<any[]>([]);
 
+  const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+
   useEffect(() => {
     if (!doctor) return;
-    fetch(`http://localhost:5000/api/doctors/${doctor.id}/reviews`)
+    fetch(`${API_BASE_URL}/doctors/${doctor.id}/reviews`)
       .then(res => res.ok ? res.json() : [])
       .then(data => setReviews(data));
   }, [doctor]);

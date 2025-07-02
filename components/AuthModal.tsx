@@ -20,6 +20,8 @@ const AuthModal: React.FC<AuthModalProps> = ({ type, onClose, onLogin, onSwitch 
 
   const isLogin = type === 'login';
 
+  const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
@@ -27,13 +29,13 @@ const AuthModal: React.FC<AuthModalProps> = ({ type, onClose, onLogin, onSwitch 
     try {
       let res, data;
       if (isLogin) {
-        res = await fetch('http://localhost:5000/api/auth/login', {
+        res = await fetch(`${API_BASE_URL}/auth/login`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ email, password }),
         });
       } else {
-        res = await fetch('http://localhost:5000/api/auth/register', {
+        res = await fetch(`${API_BASE_URL}/auth/register`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ name, email, password }),
