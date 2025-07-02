@@ -1,6 +1,8 @@
 # Smart Health Care
 
-[![Build Status](#)](#) [![Test Coverage](#)](#) [![Deploy](#)](#)
+[![Build Status](https://github.com/Hassan010103/Smart-Health-Care/actions/workflows/ci.yml/badge.svg)](https://github.com/Hassan010103/Smart-Health-Care/actions) 
+[![Test Coverage](https://codecov.io/gh/Hassan010103/Smart-Health-Care/branch/main/graph/badge.svg)](https://codecov.io/gh/Hassan010103/Smart-Health-Care) 
+[![Deploy](https://img.shields.io/badge/deploy-vercel-brightgreen)](https://vercel.com/)
 
 A full-stack web application for online medical consultations, green drug encyclopedia, and digital health management.
 
@@ -150,8 +152,8 @@ Immediate medical advice is often unavailable due to time, location, or resource
 ### 1. Clone the Repository
 
 ```bash
-git clone https://github.com/yourusername/smart-health-care.git
-cd smart-health-care
+git clone https://github.com/Hassan010103/Smart-Health-Care.git
+cd Smart-Health-Care
 ```
 
 ### 2. Install Dependencies
@@ -318,7 +320,7 @@ See [API Documentation](docs/api.md) for full details.
 ## Demo & Links
 
 - **Live Demo:** [Demo Link](#)
-- **GitHub Repo:** [https://github.com/yourusername/smart-health-care](https://github.com/yourusername/smart-health-care)
+- **GitHub Repo:** [https://github.com/Hassan010103/Smart-Health-Care](https://github.com/Hassan010103/Smart-Health-Care)
 - **Demo Video:** [YouTube Link](#)
 - **LinkedIn Post:** [LinkedIn Link](#)
 
