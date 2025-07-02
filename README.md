@@ -315,10 +315,9 @@ See [API Documentation](docs/api.md) for full details.
 
 ## Demo & Links
 
-- **Live Demo:** [Demo Link](#)
+- **Live Demo:** [smart-health-care-virid.vercel.app](#)
 - **GitHub Repo:** [https://github.com/Hassan010103/Smart-Health-Care](https://github.com/Hassan010103/Smart-Health-Care)
 - **Demo Video:** [YouTube Link](#)
-- **LinkedIn Post:** [LinkedIn Link](#)
 
 ---
 
@@ -330,7 +329,6 @@ Pull requests are welcome! For major changes, please open an issue first to disc
 - TypeScript everywhere
 - Prettier for formatting
 - ESLint for linting
-- Write tests for new features
 
 ---
 
