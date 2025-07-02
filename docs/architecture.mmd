@@ -1,0 +1,18 @@
+graph TD
+  User["User (Web)"]
+  Admin["Admin (Web)"]
+  FE["Frontend (React/Vite)"]
+  BE["Backend API (Express/Node.js)"]
+  DB["MongoDB Atlas"]
+  Razorpay["Razorpay API"]
+  Gemini["Google Gemini API"]
+  SocketIO["Socket.io (Real-Time)"]
+
+  User -- HTTP/WebSocket --> FE
+  Admin -- HTTP/WebSocket --> FE
+  FE -- REST/Socket.io --> BE
+  BE -- MongoDB Driver --> DB
+  FE -- REST --> Gemini
+  BE -- REST --> Razorpay
+  FE -- REST --> Razorpay
+  BE -- Socket.io --> SocketIO 
