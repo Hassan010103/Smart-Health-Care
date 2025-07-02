@@ -16,7 +16,6 @@ A robust backend API for the Smart Health Care application, built with Node.js, 
 - [Security & Best Practices](#security--best-practices)
 - [API Endpoints](#api-endpoints)
 - [Payment Flow](#payment-flow)
-- [Contributing](#contributing)
 
 ---
 
@@ -161,3 +160,5 @@ See [../README.md](../README.md#api-endpoints) or [../docs/api.md](../docs/api.m
 - Backend exposes `/api/payments/razorpay/order` to create a Razorpay order.
 - Frontend calls this endpoint, then opens Razorpay checkout.
 - On success, payment status is updated in the database.
+
+---
