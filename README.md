@@ -1,9 +1,5 @@
 # Smart Health Care
 
-[![Build Status](https://github.com/Hassan010103/Smart-Health-Care/actions/workflows/ci.yml/badge.svg)](https://github.com/Hassan010103/Smart-Health-Care/actions) 
-[![Test Coverage](https://codecov.io/gh/Hassan010103/Smart-Health-Care/branch/main/graph/badge.svg)](https://codecov.io/gh/Hassan010103/Smart-Health-Care) 
-[![Deploy](https://img.shields.io/badge/deploy-vercel-brightgreen)](https://vercel.com/)
-
 A full-stack web application for online medical consultations, green drug encyclopedia, and digital health management.
 
 ---
@@ -343,6 +339,3 @@ Pull requests are welcome! For major changes, please open an issue first to disc
 [MIT](LICENSE)
 
 ---
-
-**Replace all `(#)` and placeholder links with your actual links and files.  
-Let me know if you want a template for any of the docs (HLD, LLD, etc.) next!**
