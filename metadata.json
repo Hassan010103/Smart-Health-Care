@@ -1,0 +1,9 @@
+
+{
+  "name": "Smart Health Care",
+  "description": "An application for patients to receive medical advice and treatment anytime through online consultations with doctors and access to a 'green drugs' encyclopedia. It aims to save time and provide accessible healthcare.",
+  "requestFramePermissions": [
+    "camera",
+    "microphone"
+  ]
+}
