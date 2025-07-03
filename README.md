@@ -315,7 +315,7 @@ See [API Documentation](docs/api.md) for full details.
 
 ## Demo & Links
 
-- **Live Demo:** [start using](smart-health-care-virid.vercel.app)
+- **Live Demo:** [start using](https://smart-health-care-virid.vercel.app)
 - **GitHub Repo:** [https://github.com/Hassan010103/Smart-Health-Care](https://github.com/Hassan010103/Smart-Health-Care)
 - **Demo Video:** [YouTube Link](#)
 
