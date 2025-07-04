@@ -128,11 +128,42 @@ Immediate medical advice is often unavailable due to time, location, or resource
 - **Real-Time:** Socket.io for chat/video
 - **Deployment:** Render, Railway, Heroku, Vercel, Netlify
 
----
-
 ## Screenshots
 
-<!-- Add screenshots/gifs here -->
+### Home Page
+![Home Page](docs/screenshots/Home_page.png)
+
+### Find Doctor
+![Find Doctor](docs/screenshots/Find_Doctor.png)
+
+### Doctor Details
+![Doctor Details](docs/screenshots/Doc_details.png)
+
+### Appointment Booking & Payments
+![Appointments](docs/screenshots/Appointments.png)
+![Payment Interface](docs/screenshots/Payment_interface.png)
+
+### AI Symptom Checker
+![AI Suggestion](docs/screenshots/AI_suggestion.png)
+
+### Wellness & Treatments
+![Wellness & Treatments](docs/screenshots/Wellness_Treatments.png)
+![Remedy Details](docs/screenshots/Remedy.png)
+
+### Video Consultation UI
+![Video Call UI](docs/screenshots/Video_UI.png)
+
+---
+
+## Admin Panel Screens
+
+### Admin Dashboard
+![Admin Dashboard](docs/screenshots/Admin_Dashboard.png)
+
+### Manage Doctors
+![Admin - Doctors 1](docs/screenshots/Admin1.png)
+![Admin - Doctors 2](docs/screenshots/Admin2.png)
+![Admin - Doctors 3](docs/screenshots/Admin3.png)
 
 ---
 
