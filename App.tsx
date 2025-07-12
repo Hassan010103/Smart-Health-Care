@@ -24,6 +24,7 @@ import TreatmentDetailPage from './pages/TreatmentDetailPage';
 import VideoCallPage from './pages/VideoCallPage';
 import ConsultationDetailPage from './pages/ConsultationDetailPage';
 import { AuthProvider, useAuth } from './components/AuthContext';
+import { fetchWithRetry } from './services/fetchWithRetry';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
@@ -40,6 +41,7 @@ function App() {
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [payments, setPayments] = useState<any[]>([]);
   const [loadingData, setLoadingData] = useState(false);
+  const [fetchError, setFetchError] = useState<string | null>(null);
   const navigate = useNavigate();
   const { token } = useAuth();
 
@@ -52,53 +54,78 @@ function App() {
 
   // Fetch doctors and treatments (public)
   const fetchDoctors = async () => {
-    const res = await fetch(`${API_BASE_URL}/doctors`);
-    const data = await res.json();
-    setDoctors(data.map((doc: any) => ({
-      ...doc,
-      id: doc._id || doc.id // fallback for mock data
-    })));
+    try {
+      const res = await fetchWithRetry(`${API_BASE_URL}/doctors`);
+      const data = await res.json();
+      setDoctors(data.map((doc: any) => ({
+        ...doc,
+        id: doc._id || doc.id // fallback for mock data
+      })));
+      setFetchError(null);
+    } catch (err: any) {
+      setDoctors([]);
+      setFetchError('The server is waking up or temporarily unavailable. Please wait a few seconds and try again, or try refreshing the page.');
+    }
   };
   const fetchTreatments = async () => {
-    const res = await fetch(`${API_BASE_URL}/treatments`);
-    const data = await res.json();
-    setTreatments(data.map((t: any) => ({
-      ...t,
-      id: t._id || t.id // fallback for mock data
-    })));
+    try {
+      const res = await fetchWithRetry(`${API_BASE_URL}/treatments`);
+      const data = await res.json();
+      setTreatments(data.map((t: any) => ({
+        ...t,
+        id: t._id || t.id // fallback for mock data
+      })));
+      setFetchError(null);
+    } catch (err: any) {
+      setTreatments([]);
+      setFetchError('The server is waking up or temporarily unavailable. Please wait a few seconds and try again, or try refreshing the page.');
+    }
   };
   // Fetch appointments (protected)
   const fetchAppointments = async () => {
     if (!token) return setAppointments([]);
-    const res = await fetch(`${API_BASE_URL}/appointments`, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
-    if (res.ok) {
-      const data = await res.json();
-      setAppointments(data.map((a: any) => ({
-        ...a,
-        id: a._id || a.id, // fallback for mock data
-        doctorName: a.doctor?.name || a.doctorName || '',
-        specialty: a.doctor?.specialty || a.specialty || '',
-        date: a.slot ? new Date(a.slot).toLocaleDateString() : (a.date || ''),
-        time: a.slot ? new Date(a.slot).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : (a.time || ''),
-        // Optionally, map other fields as needed
-      })));
-    } else {
+    try {
+      const res = await fetchWithRetry(`${API_BASE_URL}/appointments`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setAppointments(data.map((a: any) => ({
+          ...a,
+          id: a._id || a.id, // fallback for mock data
+          doctorName: a.doctor?.name || a.doctorName || '',
+          specialty: a.doctor?.specialty || a.specialty || '',
+          date: a.slot ? new Date(a.slot).toLocaleDateString() : (a.date || ''),
+          time: a.slot ? new Date(a.slot).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : (a.time || ''),
+        })));
+        setFetchError(null);
+      } else {
+        setAppointments([]);
+        setFetchError('The server is waking up or temporarily unavailable. Please wait a few seconds and try again, or try refreshing the page.');
+      }
+    } catch (err: any) {
       setAppointments([]);
+      setFetchError('The server is waking up or temporarily unavailable. Please wait a few seconds and try again, or try refreshing the page.');
     }
   };
 
   const fetchPayments = async () => {
     if (!token) return setPayments([]);
-    const res = await fetch(`${API_BASE_URL}/payments`, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
-    if (res.ok) {
-      const data = await res.json();
-      setPayments(data);
-    } else {
+    try {
+      const res = await fetchWithRetry(`${API_BASE_URL}/payments`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setPayments(data);
+        setFetchError(null);
+      } else {
+        setPayments([]);
+        setFetchError('The server is waking up or temporarily unavailable. Please wait a few seconds and try again, or try refreshing the page.');
+      }
+    } catch (err: any) {
       setPayments([]);
+      setFetchError('The server is waking up or temporarily unavailable. Please wait a few seconds and try again, or try refreshing the page.');
     }
   };
 
@@ -497,6 +524,10 @@ function App() {
       <main className="flex-grow">
         {loadingData ? (
           <div className="text-center py-20">Loading...</div>
+        ) : fetchError ? (
+          <div className="text-center py-20 text-red-600 dark:text-red-400 bg-red-100 dark:bg-red-900/30 p-4 rounded-lg max-w-xl mx-auto">
+            {fetchError}
+          </div>
         ) : (
         <Routes>
           <Route path="/" element={<HomePage />} />
