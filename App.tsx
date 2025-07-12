@@ -64,7 +64,10 @@ function App() {
       setFetchError(null);
     } catch (err: any) {
       setDoctors([]);
-      setFetchError('The server is waking up or temporarily unavailable. Please wait a few seconds and try again, or try refreshing the page.');
+      const msg = 'The server is waking up or temporarily unavailable. Please wait a few seconds and try again, or try refreshing the page.';
+      setFetchError(msg);
+      console.error('[SmartHealth] Backend unreachable or waking up:', err);
+      console.info('[SmartHealth] If this is your first visit in a while, the backend server may be sleeping due to free hosting. Please wait 30–60 seconds, then refresh.');
     }
   };
   const fetchTreatments = async () => {
@@ -78,7 +81,10 @@ function App() {
       setFetchError(null);
     } catch (err: any) {
       setTreatments([]);
-      setFetchError('The server is waking up or temporarily unavailable. Please wait a few seconds and try again, or try refreshing the page.');
+      const msg = 'The server is waking up or temporarily unavailable. Please wait a few seconds and try again, or try refreshing the page.';
+      setFetchError(msg);
+      console.error('[SmartHealth] Backend unreachable or waking up:', err);
+      console.info('[SmartHealth] If this is your first visit in a while, the backend server may be sleeping due to free hosting. Please wait 30–60 seconds, then refresh.');
     }
   };
   // Fetch appointments (protected)
@@ -508,6 +514,16 @@ function App() {
     }
   };
 
+  const [showWakeupMessage, setShowWakeupMessage] = useState(false);
+  useEffect(() => {
+    if (loadingData) {
+      const timer = setTimeout(() => setShowWakeupMessage(true), 5000); // 5 seconds
+      return () => clearTimeout(timer);
+    } else {
+      setShowWakeupMessage(false);
+    }
+  }, [loadingData]);
+
   return (
     <div className="flex flex-col min-h-screen font-sans text-slate-800 dark:text-slate-200">
       {!isAdminRoute && (
@@ -523,10 +539,23 @@ function App() {
       )}
       <main className="flex-grow">
         {loadingData ? (
-          <div className="text-center py-20">Loading...</div>
+          <div className="text-center py-20">
+            Loading...
+            {showWakeupMessage && (
+              <div className="mt-4 text-slate-500 bg-yellow-100 border border-yellow-300 rounded p-4 max-w-lg mx-auto">
+                Connecting to the backend server...<br />
+                If this is your first visit in a while, the server may be waking up (free hosting puts it to sleep).<br />
+                Please wait 30–60 seconds, or try refreshing the page.
+              </div>
+            )}
+          </div>
         ) : fetchError ? (
           <div className="text-center py-20 text-red-600 dark:text-red-400 bg-red-100 dark:bg-red-900/30 p-4 rounded-lg max-w-xl mx-auto">
             {fetchError}
+            <div className="mt-4 text-slate-500 bg-yellow-100 border border-yellow-300 rounded p-4 max-w-lg mx-auto">
+              If this is your first visit in a while, the backend server may be waking up (free hosting puts it to sleep).<br />
+              Please wait 30–60 seconds, or try refreshing the page.
+            </div>
           </div>
         ) : (
         <Routes>
