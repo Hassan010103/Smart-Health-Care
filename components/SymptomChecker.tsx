@@ -1,6 +1,6 @@
 
 import React, { useState, useCallback } from 'react';
-import { getSymptomAnalysis } from '../services/geminiService';
+import { getSymptomAnalysis } from '../services/openaiService';
 import { marked } from 'marked';
 
 const SymptomChecker: React.FC = () => {
@@ -19,15 +19,8 @@ const SymptomChecker: React.FC = () => {
     setAnalysis('');
 
     try {
-        const stream = await getSymptomAnalysis(symptoms);
-        let fullResponse = '';
-        for await (const chunk of stream) {
-            const chunkText = chunk.text;
-            if (chunkText) {
-                fullResponse += chunkText;
-                setAnalysis(fullResponse);
-            }
-        }
+      const result = await getSymptomAnalysis(symptoms);
+      setAnalysis(result);
     } catch (e) {
       const err = e as Error;
       setError(err.message || 'An unknown error occurred.');
@@ -39,7 +32,7 @@ const SymptomChecker: React.FC = () => {
   return (
     <div className="bg-white dark:bg-slate-800/50 rounded-xl shadow-lg p-6 sm:p-8 border border-slate-200 dark:border-slate-700">
       <h3 className="text-2xl font-bold text-slate-800 dark:text-slate-100">AI Symptom Checker</h3>
-      <p className="mt-2 text-slate-600 dark:text-slate-400">Describe your symptoms to get instant, AI-powered insights. Powered by Gemini.</p>
+      <p className="mt-2 text-slate-600 dark:text-slate-400">Describe your symptoms to get instant, AI-powered insights.</p>
       
       <div className="mt-6">
         <textarea

@@ -10,6 +10,7 @@ import appointmentsRouter from './routes/appointments';
 import treatmentsRouter from './routes/treatments';
 import paymentsRouter from './routes/payments';
 import chatRouter from './routes/chat';
+import aiRouter from './routes/ai';
 
 // Load environment variables
 dotenv.config();
@@ -20,6 +21,12 @@ const app = express();
 app.use(express.json());
 app.use(cors());
 app.use(helmet());
+
+// Global logging middleware for all requests
+app.use((req, res, next) => {
+  console.log('[REQUEST]', req.method, req.originalUrl, 'Auth:', req.headers.authorization);
+  next();
+});
 
 // Health check route
 app.get('/api/health', (req, res) => {
@@ -34,5 +41,6 @@ app.use('/api/appointments', appointmentsRouter);
 app.use('/api/treatments', treatmentsRouter);
 app.use('/api/payments', paymentsRouter);
 app.use('/api/chat', chatRouter);
+app.use('/api/ai', aiRouter);
 
 export default app; 

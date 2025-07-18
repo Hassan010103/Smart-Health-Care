@@ -43,10 +43,12 @@ const AuthModal: React.FC<AuthModalProps> = ({ type, onClose, onLogin, onSwitch 
       }
       data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Authentication failed');
-      login(data.token); // Save token in AuthContext/localStorage
+      login(data.token, data.user); // Save token and user in AuthContext/localStorage
       onLogin(data.user.name); // Pass user name up to App
       setName(''); setEmail(''); setPassword('');
       setError(null);
+      // Force reload to ensure token is used everywhere
+      window.location.reload();
     } catch (err: any) {
       setError(err.message);
     } finally {

@@ -51,8 +51,21 @@ export const getAppointmentById = async (req: any, res: Response) => {
   }
   const appt = await Appointment.findById(req.params.id).populate('doctor', 'name specialty').populate('patient', 'name email');
   if (!appt) return res.status(404).json({ error: 'Appointment not found' });
+  // TEMPORARY: Allow any logged-in user to access any appointment (for demo/testing)
+  if (!req.user) {
+    return res.status(403).json({ error: 'Forbidden' });
+  }
+  // Debug logging for permission check
+  const patientId = appt.patient?._id?.toString?.() || appt.patient?.toString?.() || "";
+  const doctorId = appt.doctor?._id?.toString?.() || appt.doctor?.toString?.() || "";
+  const userId = req.user.id;
+  console.log('[PERMISSION DEBUG]', { userId, patientId, doctorId, role: req.user.role });
   // Only patient, doctor, or admin can view
-  if (req.user.role !== 'admin' && req.user.id !== appt.patient.toString() && req.user.id !== appt.doctor.toString()) {
+  if (
+    req.user.role !== 'admin' &&
+    userId !== patientId &&
+    userId !== doctorId
+  ) {
     return res.status(403).json({ error: 'Forbidden' });
   }
   res.json(appt);

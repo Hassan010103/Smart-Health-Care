@@ -5,11 +5,7 @@ import { DocumentTextIcon, PillIcon } from '../components/IconComponents';
 import { useAuth } from '../components/AuthContext';
 import ChatBox from '../components/ChatBox';
 
-interface ConsultationDetailPageProps {
-  appointments: Appointment[];
-}
-
-const ConsultationDetailPage: React.FC<ConsultationDetailPageProps> = ({ appointments }) => {
+const ConsultationDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const { token } = useAuth();
   const [appointment, setAppointment] = useState<Appointment | null>(null);

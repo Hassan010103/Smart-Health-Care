@@ -1,15 +1,13 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Doctor } from '../../types';
 import { XMarkIcon, PencilIcon, TrashIcon } from '../../components/IconComponents';
+import { useAuth } from '../../components/AuthContext';
 
-interface ManageDoctorsPageProps {
-  doctors: Doctor[];
-  onAddDoctor: (doctor: Omit<Doctor, 'id' | 'rating' | 'reviews' | 'bio' | 'qualifications' | 'availability'>) => void;
-  onEditDoctor?: (id: string, updates: Partial<Doctor>) => void;
-  onDeleteDoctor?: (id: string) => void;
-}
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
-const ManageDoctorsPage: React.FC<ManageDoctorsPageProps> = ({ doctors, onAddDoctor, onEditDoctor, onDeleteDoctor }) => {
+const ManageDoctorsPage: React.FC = () => {
+  const { token } = useAuth();
+  const [doctors, setDoctors] = useState<Doctor[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [newDoctor, setNewDoctor] = useState({
     name: '',
@@ -26,6 +24,22 @@ const ManageDoctorsPage: React.FC<ManageDoctorsPageProps> = ({ doctors, onAddDoc
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // Fetch doctors from backend
+  useEffect(() => {
+    setLoading(true);
+    setError(null);
+    fetch(`${API_BASE_URL}/doctors`)
+      .then(res => res.ok ? res.json() : Promise.reject(res))
+      .then(data => {
+        setDoctors(data.map((doc: any) => ({ ...doc, id: doc._id || doc.id })));
+        setLoading(false);
+      })
+      .catch(() => {
+        setError('Unable to load doctors. The backend may be waking up. Please wait and refresh.');
+        setLoading(false);
+      });
+  }, []);
+
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setNewDoctor(prev => ({ ...prev, [name]: value }));
@@ -40,10 +54,36 @@ const ManageDoctorsPage: React.FC<ManageDoctorsPageProps> = ({ doctors, onAddDoc
     e.preventDefault();
     setLoading(true);
     setError(null);
+    if (!token) {
+      setError('No token provided. Please log in as admin.');
+      setLoading(false);
+      return;
+    }
     try {
-      await onAddDoctor(newDoctor);
+      const res = await fetch(`${API_BASE_URL}/doctors`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          ...newDoctor,
+          password: 'password123',
+          qualifications: [],
+          bio: '',
+          availability: [],
+        }),
+      });
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error || 'Failed to add doctor');
+      }
       setIsModalOpen(false);
       setNewDoctor({ name: '', email: '', specialty: '' });
+      // Refresh doctors
+      const doctorsRes = await fetch(`${API_BASE_URL}/doctors`);
+      const doctorsData = await doctorsRes.json();
+      setDoctors(doctorsData.map((doc: any) => ({ ...doc, id: doc._id || doc.id })));
       alert('Doctor added!');
     } catch (err: any) {
       setError(err.message || 'Failed to add doctor');
@@ -53,21 +93,41 @@ const ManageDoctorsPage: React.FC<ManageDoctorsPageProps> = ({ doctors, onAddDoc
   };
 
   const handleEdit = (doctor: Doctor) => {
-    setEditDoctorId(doctor.id);
+    setEditDoctorId(doctor.id as any);
     setEditDoctor({ name: doctor.name, email: doctor.email, specialty: doctor.specialty });
     setIsEditModalOpen(true);
   };
 
   const handleEditSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (onEditDoctor && editDoctorId) {
+    if (!token) {
+      setError('No token provided. Please log in as admin.');
+      setLoading(false);
+      return;
+    }
+    if (editDoctorId) {
       setLoading(true);
       setError(null);
       try {
-        await onEditDoctor(editDoctorId, editDoctor);
+        const res = await fetch(`${API_BASE_URL}/doctors/${editDoctorId}`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify(editDoctor),
+        });
+        if (!res.ok) {
+          const data = await res.json();
+          throw new Error(data.error || 'Failed to update doctor');
+        }
         setIsEditModalOpen(false);
         setEditDoctorId(null);
         setEditDoctor({ name: '', email: '', specialty: '' });
+        // Refresh doctors
+        const doctorsRes = await fetch(`${API_BASE_URL}/doctors`);
+        const doctorsData = await doctorsRes.json();
+        setDoctors(doctorsData.map((doc: any) => ({ ...doc, id: doc._id || doc.id })));
         alert('Doctor updated!');
       } catch (err: any) {
         setError(err.message || 'Failed to update doctor');
@@ -78,18 +138,34 @@ const ManageDoctorsPage: React.FC<ManageDoctorsPageProps> = ({ doctors, onAddDoc
   };
 
   const handleDelete = async (id: string) => {
+    if (!token) {
+      setError('No token provided. Please log in as admin.');
+      setLoading(false);
+      return;
+    }
     if (window.confirm('Are you sure you want to delete this doctor?')) {
-      if (onDeleteDoctor) {
-        setLoading(true);
-        setError(null);
-        try {
-          await onDeleteDoctor(id);
-          alert('Doctor deleted!');
-        } catch (err: any) {
-          setError(err.message || 'Failed to delete doctor');
-        } finally {
-          setLoading(false);
+      setLoading(true);
+      setError(null);
+      try {
+        const res = await fetch(`${API_BASE_URL}/doctors/${id}`, {
+          method: 'DELETE',
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+        if (!res.ok) {
+          const data = await res.json();
+          throw new Error(data.error || 'Failed to delete doctor');
         }
+        // Refresh doctors
+        const doctorsRes = await fetch(`${API_BASE_URL}/doctors`);
+        const doctorsData = await doctorsRes.json();
+        setDoctors(doctorsData.map((doc: any) => ({ ...doc, id: doc._id || doc.id })));
+        alert('Doctor deleted!');
+      } catch (err: any) {
+        setError(err.message || 'Failed to delete doctor');
+      } finally {
+        setLoading(false);
       }
     }
   };
@@ -105,6 +181,9 @@ const ManageDoctorsPage: React.FC<ManageDoctorsPageProps> = ({ doctors, onAddDoc
           + Add Doctor
         </button>
       </div>
+
+      {loading && <div className="text-center py-8">Loading...</div>}
+      {error && <div className="text-center text-red-500 py-2">{error}</div>}
 
       <div className="bg-white dark:bg-slate-800 shadow-md rounded-lg overflow-x-auto">
         <table className="min-w-full leading-normal">

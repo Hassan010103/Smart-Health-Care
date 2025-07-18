@@ -6,15 +6,56 @@ import PatientReview from '../components/PatientReview';
 import { AcademicCapIcon } from '../components/IconComponents';
 import BookingConfirmationModal from '../components/BookingConfirmationModal';
 
+// Remove doctors prop from interface
 interface DoctorDetailPageProps {
-  doctors: Doctor[];
   isLoggedIn: boolean;
   onBookAppointment: (doctor: Doctor, slot: {day: string, time: string}) => void;
 }
 
-const DoctorDetailPage: React.FC<DoctorDetailPageProps> = ({ doctors, isLoggedIn, onBookAppointment }) => {
+const DoctorDetailPage: React.FC<DoctorDetailPageProps> = ({ isLoggedIn, onBookAppointment }) => {
   const { id } = useParams<{ id: string }>();
-  const doctor = doctors.find(d => String(d.id) === String(id));
+  const [doctor, setDoctor] = useState<Doctor | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [selectedSlot, setSelectedSlot] = useState<{ day: string, time: string } | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [reviews, setReviews] = useState<any[]>([]);
+
+  const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+
+  useEffect(() => {
+    if (!id) return;
+    setLoading(true);
+    setError(null);
+    fetch(`${API_BASE_URL}/doctors/${id}`)
+      .then(res => {
+        if (!res.ok) throw new Error('Doctor not found');
+        return res.json();
+      })
+      .then(data => {
+        // Map backend _id to id for frontend compatibility
+        setDoctor({ ...data, id: data._id || data.id });
+        setLoading(false);
+      })
+      .catch(err => {
+        setError(err.message || 'Failed to load doctor');
+        setLoading(false);
+      });
+  }, [id, API_BASE_URL]);
+
+  useEffect(() => {
+    if (!doctor) return;
+    fetch(`${API_BASE_URL}/doctors/${doctor.id}/reviews`)
+      .then(res => res.ok ? res.json() : [])
+      .then(data => setReviews(data));
+  }, [doctor, API_BASE_URL]);
+
+  if (loading) return <div className="flex justify-center items-center min-h-[40vh] text-lg">Loading doctor details...</div>;
+  if (error) return <div className="flex justify-center items-center min-h-[40vh] text-red-500">{error}</div>;
+  if (!doctor) {
+    // If doctor not found, redirect to the main search page
+    return <Navigate to="/find-doctor" replace />;
+  }
 
   // Defensive: fallback values for all fields
   const imageUrl = doctor?.imageUrl || '/default.png';
@@ -31,24 +72,6 @@ const DoctorDetailPage: React.FC<DoctorDetailPageProps> = ({ doctors, isLoggedIn
   const bio = doctor?.bio || '';
   const qualifications = Array.isArray(doctor?.qualifications) ? doctor.qualifications : [];
   const availability = Array.isArray(doctor?.availability) ? doctor.availability : [];
-
-  const [selectedSlot, setSelectedSlot] = useState<{ day: string, time: string } | null>(null);
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [reviews, setReviews] = useState<any[]>([]);
-
-  const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
-
-  useEffect(() => {
-    if (!doctor) return;
-    fetch(`${API_BASE_URL}/doctors/${doctor.id}/reviews`)
-      .then(res => res.ok ? res.json() : [])
-      .then(data => setReviews(data));
-  }, [doctor]);
-
-  if (!doctor) {
-    // If doctor not found, redirect to the main search page
-    return <Navigate to="/find-doctor" replace />;
-  }
 
   const handleBookingRequest = () => {
       if (selectedSlot) {

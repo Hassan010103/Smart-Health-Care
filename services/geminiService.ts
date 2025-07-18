@@ -54,14 +54,19 @@ Based on your description of a "throbbing headache and sensitivity to light", he
   try {
     // Only initialize the AI client if there is an API key. This prevents the crash.
     const ai = new GoogleGenAI({ apiKey: API_KEY });
-    const responseStream = await ai.models.generateContentStream({
-      model: "gemini-2.5-flash-preview-04-17",
+    // Use non-streaming generateContent method for best compatibility
+    const response = await ai.models.generateContent({
+      model: "models/gemini-pro",
       contents: symptoms,
       config: {
         systemInstruction: systemInstruction,
       }
     });
-    return responseStream;
+    // Wrap the response in an async generator to match the expected return type
+    async function* singleResponseStream() {
+      yield response;
+    }
+    return singleResponseStream();
   } catch (error) {
     console.error("Error calling Gemini API:", error);
     // If the API call fails for any other reason, it will throw an error.

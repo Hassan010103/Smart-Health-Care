@@ -1,20 +1,41 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { useParams, Navigate, Link } from 'react-router-dom';
 import { Treatment } from '../types';
 import { CheckBadgeIcon, BookOpenIcon, ExclamationTriangleIcon } from '../components/IconComponents';
 
-interface TreatmentDetailPageProps {
-  treatments: Treatment[];
-}
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
-const TreatmentDetailPage: React.FC<TreatmentDetailPageProps> = ({ treatments }) => {
+const TreatmentDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
-  const treatment = treatments.find(t => String(t.id) === String(id));
+  const [treatment, setTreatment] = useState<Treatment | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
+  useEffect(() => {
+    if (!id) return;
+    setLoading(true);
+    setError(null);
+    fetch(`${API_BASE_URL}/treatments/${id}`)
+      .then(res => {
+        if (!res.ok) throw new Error('Treatment not found');
+        return res.json();
+      })
+      .then(data => {
+        setTreatment({ ...data, id: data._id || data.id });
+        setLoading(false);
+      })
+      .catch(err => {
+        setError(err.message || 'Failed to load treatment');
+        setLoading(false);
+      });
+  }, [id]);
+
+  if (loading) return <div className="flex justify-center items-center min-h-[40vh] text-lg">Loading treatment details...</div>;
+  if (error) return <div className="flex justify-center items-center min-h-[40vh] text-red-500">{error}</div>;
   if (!treatment) {
     return <Navigate to="/treatments" replace />;
   }
-  
+
   const bannerImageUrl = `https://placehold.co/1200x400/0e7490/white?text=${encodeURIComponent(treatment.name)}`;
 
   return (
@@ -42,12 +63,12 @@ const TreatmentDetailPage: React.FC<TreatmentDetailPageProps> = ({ treatments })
                                 Key Benefits
                             </h3>
                             <ul className="space-y-2 text-slate-600 dark:text-slate-300 pl-4">
-                                {treatment.benefits.map((benefit, index) => (
+                                {treatment.benefits && treatment.benefits.length > 0 ? treatment.benefits.map((benefit, index) => (
                                     <li key={index} className="flex items-start">
                                         <span className="text-green-500 mr-2 mt-1">&#10003;</span>
                                         <span>{benefit}</span>
                                     </li>
-                                ))}
+                                )) : <li>No benefits listed.</li>}
                             </ul>
                         </div>
 
@@ -57,7 +78,7 @@ const TreatmentDetailPage: React.FC<TreatmentDetailPageProps> = ({ treatments })
                                 <BookOpenIcon className="w-6 h-6 text-blue-500" />
                                 How to Use
                             </h3>
-                            <p className="text-slate-600 dark:text-slate-300">{treatment.howToUse}</p>
+                            <p className="text-slate-600 dark:text-slate-300">{treatment.howToUse || 'No usage instructions provided.'}</p>
                         </div>
                     </div>
                 </div>
@@ -69,7 +90,7 @@ const TreatmentDetailPage: React.FC<TreatmentDetailPageProps> = ({ treatments })
                             <ExclamationTriangleIcon className="w-5 h-5" />
                             Disclaimer
                         </h3>
-                        <p className="text-sm text-yellow-700 dark:text-yellow-400">{treatment.disclaimer}</p>
+                        <p className="text-sm text-yellow-700 dark:text-yellow-400">{treatment.disclaimer || 'No disclaimer provided.'}</p>
                     </div>
 
                     <div className="bg-white dark:bg-slate-800 rounded-xl shadow-lg p-6 border border-slate-200 dark:border-slate-700">

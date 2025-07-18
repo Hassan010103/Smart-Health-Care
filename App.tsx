@@ -29,21 +29,21 @@ import { fetchWithRetry } from './services/fetchWithRetry';
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
 function App() {
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [isAdminLoggedIn, setIsAdminLoggedIn] = useState(false);
-  const [currentUser, setCurrentUser] = useState<{ name: string } | null>(null);
+  // Remove local isLoggedIn and currentUser state. Use AuthContext instead.
   const [authModal, setAuthModal] = useState<AuthModalType | null>(null);
   const [theme, setTheme] = useState<Theme>('light');
 
+  const toggleTheme = () => {
+    setTheme(prev => (prev === 'light' ? 'dark' : 'light'));
+  };
+
   // Backend data state
-  const [doctors, setDoctors] = useState<Doctor[]>([]);
-  const [treatments, setTreatments] = useState<Treatment[]>([]);
-  const [appointments, setAppointments] = useState<Appointment[]>([]);
-  const [payments, setPayments] = useState<any[]>([]);
-  const [loadingData, setLoadingData] = useState(false);
-  const [fetchError, setFetchError] = useState<string | null>(null);
+  // Remove all global data fetching and loading state
+  // Remove doctors, treatments, appointments, payments, loadingData, fetchError, showWakeupMessage, and related useEffects
+  // Only keep authentication, navigation, and admin state
   const navigate = useNavigate();
-  const { token } = useAuth();
+  const { token, user, login, logout } = useAuth();
+  const isLoggedIn = !!token && !!user;
 
   // New admin login state
   const [adminAuthModal, setAdminAuthModal] = useState(false);
@@ -52,169 +52,11 @@ function App() {
   const [adminLoginError, setAdminLoginError] = useState<string | null>(null);
   const [adminLoginLoading, setAdminLoginLoading] = useState(false);
 
-  // Fetch doctors and treatments (public)
-  const fetchDoctors = async () => {
-    try {
-      const res = await fetchWithRetry(`${API_BASE_URL}/doctors`);
-      const data = await res.json();
-      setDoctors(data.map((doc: any) => ({
-        ...doc,
-        id: doc._id || doc.id // fallback for mock data
-      })));
-      setFetchError(null);
-    } catch (err: any) {
-      setDoctors([]);
-      const msg = 'The server is waking up or temporarily unavailable. Please wait a few seconds and try again, or try refreshing the page.';
-      setFetchError(msg);
-      console.error('[SmartHealth] Backend unreachable or waking up:', err);
-      console.info('[SmartHealth] If this is your first visit in a while, the backend server may be sleeping due to free hosting. Please wait 30–60 seconds, then refresh.');
-    }
-  };
-  const fetchTreatments = async () => {
-    try {
-      const res = await fetchWithRetry(`${API_BASE_URL}/treatments`);
-      const data = await res.json();
-      setTreatments(data.map((t: any) => ({
-        ...t,
-        id: t._id || t.id // fallback for mock data
-      })));
-      setFetchError(null);
-    } catch (err: any) {
-      setTreatments([]);
-      const msg = 'The server is waking up or temporarily unavailable. Please wait a few seconds and try again, or try refreshing the page.';
-      setFetchError(msg);
-      console.error('[SmartHealth] Backend unreachable or waking up:', err);
-      console.info('[SmartHealth] If this is your first visit in a while, the backend server may be sleeping due to free hosting. Please wait 30–60 seconds, then refresh.');
-    }
-  };
-  // Fetch appointments (protected)
-  const fetchAppointments = async () => {
-    if (!token) return setAppointments([]);
-    try {
-      const res = await fetchWithRetry(`${API_BASE_URL}/appointments`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      if (res.ok) {
-        const data = await res.json();
-        setAppointments(data.map((a: any) => ({
-          ...a,
-          id: a._id || a.id, // fallback for mock data
-          doctorName: a.doctor?.name || a.doctorName || '',
-          specialty: a.doctor?.specialty || a.specialty || '',
-          date: a.slot ? new Date(a.slot).toLocaleDateString() : (a.date || ''),
-          time: a.slot ? new Date(a.slot).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : (a.time || ''),
-        })));
-        setFetchError(null);
-      } else {
-        setAppointments([]);
-        setFetchError('The server is waking up or temporarily unavailable. Please wait a few seconds and try again, or try refreshing the page.');
-      }
-    } catch (err: any) {
-      setAppointments([]);
-      setFetchError('The server is waking up or temporarily unavailable. Please wait a few seconds and try again, or try refreshing the page.');
-    }
-  };
-
-  const fetchPayments = async () => {
-    if (!token) return setPayments([]);
-    try {
-      const res = await fetchWithRetry(`${API_BASE_URL}/payments`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      if (res.ok) {
-        const data = await res.json();
-        setPayments(data);
-        setFetchError(null);
-      } else {
-        setPayments([]);
-        setFetchError('The server is waking up or temporarily unavailable. Please wait a few seconds and try again, or try refreshing the page.');
-      }
-    } catch (err: any) {
-      setPayments([]);
-      setFetchError('The server is waking up or temporarily unavailable. Please wait a few seconds and try again, or try refreshing the page.');
-    }
-  };
-
-  const createPayment = async (appointmentId: string, amount: number) => {
-    if (!token) return alert('You must be logged in.');
-    try {
-      const res = await fetch(`${API_BASE_URL}/payments`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({ appointmentId, amount }),
-      });
-      if (!res.ok) {
-        const data = await res.json();
-        throw new Error(data.error || 'Failed to create payment');
-      }
-      await fetchPayments();
-      alert('Payment created!');
-    } catch (err: any) {
-      alert(err.message);
-    }
-  };
-
-  const updatePaymentStatus = async (id: string, status: string) => {
-    if (!token) return alert('You must be logged in as admin.');
-    try {
-      const res = await fetch(`${API_BASE_URL}/payments/${id}/status`, {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({ status }),
-      });
-      if (!res.ok) {
-        const data = await res.json();
-        throw new Error(data.error || 'Failed to update payment status');
-      }
-      await fetchPayments();
-      alert('Payment status updated!');
-    } catch (err: any) {
-      alert(err.message);
-    }
-  };
-
-  // Fetch all data on load and after login
-  useEffect(() => {
-    setLoadingData(true);
-    Promise.all([fetchDoctors(), fetchTreatments()])
-      .then(() => setLoadingData(false));
-  }, []);
-  useEffect(() => {
-    if (token) {
-      setIsLoggedIn(true);
-      fetchAppointments();
-      fetchPayments();
-    } else {
-      setIsLoggedIn(false);
-      setAppointments([]);
-      setPayments([]);
-    }
-  }, [token]);
-
-  useEffect(() => {
-    if (theme === 'dark') {
-      document.documentElement.classList.add('dark');
-    } else {
-      document.documentElement.classList.remove('dark');
-    }
-  }, [theme]);
-
-  const toggleTheme = () => {
-    setTheme(prev => (prev === 'light' ? 'dark' : 'light'));
-  };
-
+  // Remove all global data fetching and loading state
+  // Remove doctors, treatments, appointments, payments, loadingData, fetchError, showWakeupMessage, and related useEffects
+  // Only keep authentication, navigation, and admin state
   const handleLogin = (name: string) => {
-    setIsLoggedIn(true);
-    setCurrentUser({ name });
     setAuthModal(null);
-    fetchAppointments();
-    fetchPayments();
   };
 
   const handleAdminLogin = () => {
@@ -234,7 +76,7 @@ function App() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Authentication failed');
       if (data.user.role !== 'admin') throw new Error('Not an admin account');
-      setIsAdminLoggedIn(true);
+      login(data.token, data.user); // Save token and user in AuthContext/localStorage
       setAdminAuthModal(false);
       setAdminEmail('');
       setAdminPassword('');
@@ -250,11 +92,7 @@ function App() {
   };
 
   const handleLogout = () => {
-    setIsLoggedIn(false);
-    setIsAdminLoggedIn(false);
-    setCurrentUser(null);
-    setAppointments([]);
-    setPayments([]);
+    logout();
     navigate('/');
   };
 
@@ -288,7 +126,7 @@ function App() {
         const data = await res.json();
         throw new Error(data.error || 'Failed to add doctor');
       }
-      await fetchDoctors();
+      // await fetchDoctors(); // Removed
       alert('Doctor added!');
     } catch (err: any) {
       alert(err.message);
@@ -309,7 +147,7 @@ function App() {
         const data = await res.json();
         throw new Error(data.error || 'Failed to add treatment');
       }
-      await fetchTreatments();
+      // await fetchTreatments(); // Removed
       alert('Treatment added!');
     } catch (err: any) {
       alert(err.message);
@@ -348,7 +186,7 @@ function App() {
         const data = await res.json();
         throw new Error(data.error || 'Failed to book appointment');
       }
-      await fetchAppointments();
+      // await fetchAppointments(); // Removed
       alert('Appointment booked!');
       navigate('/dashboard');
     } catch (err: any) {
@@ -367,7 +205,7 @@ function App() {
         const data = await res.json();
         throw new Error(data.error || 'Failed to cancel appointment');
       }
-      await fetchAppointments();
+      // await fetchAppointments(); // Removed
       alert('Appointment cancelled!');
     } catch (err: any) {
       alert(err.message);
@@ -392,7 +230,7 @@ function App() {
         const data = await res.json();
         throw new Error(data.error || 'Failed to update doctor');
       }
-      await fetchDoctors();
+      // await fetchDoctors(); // Removed
       alert('Doctor updated!');
     } catch (err: any) {
       alert(err.message);
@@ -410,7 +248,7 @@ function App() {
         const data = await res.json();
         throw new Error(data.error || 'Failed to delete doctor');
       }
-      await fetchDoctors();
+      // await fetchDoctors(); // Removed
       alert('Doctor deleted!');
     } catch (err: any) {
       alert(err.message);
@@ -432,7 +270,7 @@ function App() {
         const data = await res.json();
         throw new Error(data.error || 'Failed to update treatment');
       }
-      await fetchTreatments();
+      // await fetchTreatments(); // Removed
       alert('Treatment updated!');
     } catch (err: any) {
       alert(err.message);
@@ -450,7 +288,7 @@ function App() {
         const data = await res.json();
         throw new Error(data.error || 'Failed to delete treatment');
       }
-      await fetchTreatments();
+      // await fetchTreatments(); // Removed
       alert('Treatment deleted!');
     } catch (err: any) {
       alert(err.message);
@@ -499,10 +337,10 @@ function App() {
         handler: async function (response: any) {
           // 3. On success, mark payment as completed in backend (mock for now)
           alert('Payment successful! Payment ID: ' + response.razorpay_payment_id);
-          await fetchPayments();
+          // await fetchPayments(); // Removed
         },
         prefill: {
-          name: currentUser?.name || '',
+          name: user?.name || '',
           email: '',
         },
         theme: { color: '#06b6d4' },
@@ -514,22 +352,65 @@ function App() {
     }
   };
 
-  const [showWakeupMessage, setShowWakeupMessage] = useState(false);
-  useEffect(() => {
-    if (loadingData) {
-      const timer = setTimeout(() => setShowWakeupMessage(true), 5000); // 5 seconds
-      return () => clearTimeout(timer);
-    } else {
-      setShowWakeupMessage(false);
+  const createPayment = async (appointmentId: string, amount: number) => {
+    if (!token) return alert('You must be logged in.');
+    try {
+      const res = await fetch(`${API_BASE_URL}/payments`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ appointmentId, amount }),
+      });
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error || 'Failed to create payment');
+      }
+      alert('Payment created!');
+    } catch (err: any) {
+      alert(err.message);
     }
-  }, [loadingData]);
+  };
+
+  const updatePaymentStatus = async (id: string, status: string) => {
+    if (!token) return alert('You must be logged in as admin.');
+    try {
+      const res = await fetch(`${API_BASE_URL}/payments/${id}/status`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ status }),
+      });
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error || 'Failed to update payment status');
+      }
+      alert('Payment status updated!');
+    } catch (err: any) {
+      alert(err.message);
+    }
+  };
+
+  // Remove all global data fetching and loading state
+  // Remove doctors, treatments, appointments, payments, loadingData, fetchError, showWakeupMessage, and related useEffects
+  // Only keep authentication, navigation, and admin state
+  useEffect(() => {
+    if (theme === 'dark') {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+  }, [theme]);
 
   return (
     <div className="flex flex-col min-h-screen font-sans text-slate-800 dark:text-slate-200">
       {!isAdminRoute && (
         <Header 
           isLoggedIn={isLoggedIn}
-          userName={currentUser?.name}
+          userName={user?.name}
           onLogout={handleLogout}
           onOpenModal={handleOpenModal}
           onAdminLogin={handleAdminLogin}
@@ -538,59 +419,29 @@ function App() {
         />
       )}
       <main className="flex-grow">
-        {loadingData ? (
-          <div className="text-center py-20">
-            Loading...
-            {showWakeupMessage && (
-              <div className="mt-4 text-slate-500 bg-yellow-100 border border-yellow-300 rounded p-4 max-w-lg mx-auto">
-                Connecting to the backend server...<br />
-                If this is your first visit in a while, the server may be waking up (free hosting puts it to sleep).<br />
-                Please wait 30–60 seconds, or try refreshing the page.
-              </div>
-            )}
-          </div>
-        ) : fetchError ? (
-          <div className="text-center py-20 text-red-600 dark:text-red-400 bg-red-100 dark:bg-red-900/30 p-4 rounded-lg max-w-xl mx-auto">
-            {fetchError}
-            <div className="mt-4 text-slate-500 bg-yellow-100 border border-yellow-300 rounded p-4 max-w-lg mx-auto">
-              If this is your first visit in a while, the backend server may be waking up (free hosting puts it to sleep).<br />
-              Please wait 30–60 seconds, or try refreshing the page.
-            </div>
-          </div>
-        ) : (
         <Routes>
           <Route path="/" element={<HomePage />} />
-          <Route path="/find-doctor" element={<FindDoctorPage doctors={doctors} />} />
-          <Route path="/doctor/:id" element={
-            <DoctorDetailPage 
-              doctors={doctors} 
-              onBookAppointment={handleBookAppointment}
-              isLoggedIn={isLoggedIn}
-            />} 
-          />
-          <Route path="/treatments" element={<TreatmentsPage treatments={treatments} />} />
-          <Route path="/treatment/:id" element={<TreatmentDetailPage treatments={treatments} />} />
-
-          <Route path="/dashboard" element={<DashboardPage appointments={appointments} isLoggedIn={isLoggedIn} onOpenLogin={() => handleOpenModal('login')} onCancelAppointment={cancelAppointment} payments={payments} onRazorpayPay={handleRazorpayPay} />} />
-          <Route path="/call/:id" element={<VideoCallPage appointments={appointments} token={token} />} />
-          <Route path="/consultation/:id" element={<ConsultationDetailPage appointments={appointments} />} />
-
+          <Route path="/find-doctor" element={<FindDoctorPage />} />
+          <Route path="/doctor/:id" element={<DoctorDetailPage onBookAppointment={handleBookAppointment} isLoggedIn={isLoggedIn} />} />
+          <Route path="/treatments" element={<TreatmentsPage />} />
+          <Route path="/treatment/:id" element={<TreatmentDetailPage />} />
+          <Route path="/dashboard" element={<DashboardPage isLoggedIn={isLoggedIn} onOpenLogin={() => handleOpenModal('login')} onCancelAppointment={cancelAppointment} onRazorpayPay={handleRazorpayPay} />} />
+          <Route path="/call/:id" element={<VideoCallPage token={token} />} />
+          <Route path="/consultation/:id" element={<ConsultationDetailPage />} />
           <Route path="/pricing" element={<PricingPage />} />
           <Route path="/faq" element={<FaqPage />} />
           <Route path="/contact" element={<ContactPage />} />
           <Route path="/privacy-policy" element={<PrivacyPolicyPage />} />
           <Route path="/terms-of-service" element={<TermsOfServicePage />} />
-        
-          <Route element={<ProtectedRoute isAllowed={isAdminLoggedIn} />}>
+          <Route element={<ProtectedRoute isAllowed={user?.role === 'admin'} />}>
             <Route path="/admin" element={<AdminLayout />}>
-              <Route index element={<AdminDashboardPage doctorsCount={doctors.length} treatmentsCount={treatments.length} />} />
-              <Route path="doctors" element={<ManageDoctorsPage doctors={doctors} onAddDoctor={addDoctor} onEditDoctor={editDoctor} onDeleteDoctor={deleteDoctor} />} />
-              <Route path="treatments" element={<ManageTreatmentsPage treatments={treatments} onAddTreatment={addTreatment} onEditTreatment={editTreatment} onDeleteTreatment={deleteTreatment} />} />
-              <Route path="payments" element={<ViewPaymentsPage payments={payments} onCreatePayment={createPayment} onUpdatePaymentStatus={updatePaymentStatus} />} />
+              <Route index element={<AdminDashboardPage />} />
+              <Route path="doctors" element={<ManageDoctorsPage onAddDoctor={addDoctor} onEditDoctor={editDoctor} onDeleteDoctor={deleteDoctor} />} />
+              <Route path="treatments" element={<ManageTreatmentsPage onAddTreatment={addTreatment} onEditTreatment={editTreatment} onDeleteTreatment={deleteTreatment} />} />
+              <Route path="payments" element={<ViewPaymentsPage onCreatePayment={createPayment} onUpdatePaymentStatus={updatePaymentStatus} />} />
             </Route>
           </Route>
         </Routes>
-        )}
       </main>
       {authModal && (
         <AuthModal 

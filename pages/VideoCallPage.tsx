@@ -6,12 +6,7 @@ import { io, Socket } from 'socket.io-client';
 import ChatBox from '../components/ChatBox';
 import { useAuth } from '../components/AuthContext';
 
-interface VideoCallPageProps {
-  appointments: Appointment[];
-  token: string;
-}
-
-const VideoCallPage: React.FC<VideoCallPageProps> = ({ appointments, token }) => {
+const VideoCallPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const { token: authToken } = useAuth();
   const [appointment, setAppointment] = useState<Appointment | null>(null);
@@ -32,37 +27,40 @@ const VideoCallPage: React.FC<VideoCallPageProps> = ({ appointments, token }) =>
   const SOCKET_URL = API_BASE_URL.replace('/api', '');
 
   useEffect(() => {
-    const found = appointments.find(a => String(a.id) === String(id));
-    if (found) {
-      setAppointment(found);
+    if (!id || !authToken) {
       setLoading(false);
-    } else if (id && (token || authToken)) {
-      setLoading(true);
-      fetch(`${API_BASE_URL}/appointments/${id}`, {
-        headers: { Authorization: `Bearer ${token || authToken}` },
-      })
-        .then(res => res.ok ? res.json() : Promise.reject(res))
-        .then(data => {
-          setAppointment({
-            id: data._id || data.id,
-            doctorName: data.doctor?.name || '',
-            specialty: data.doctor?.specialty || '',
-            date: new Date(data.slot).toLocaleDateString(),
-            time: new Date(data.slot).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-            status: data.status,
-            notes: data.notes,
-            prescription: data.prescription || [],
-          });
-          setLoading(false);
-        })
-        .catch(() => {
-          setFetchError('Appointment not found or you do not have access.');
-          setLoading(false);
-        });
-    } else {
-      setLoading(false);
+      return;
     }
-  }, [appointments, id, token, authToken]);
+    setLoading(true);
+    fetch(`${API_BASE_URL}/appointments/${id}`, {
+      headers: { Authorization: `Bearer ${authToken}` },
+    })
+      .then(async res => {
+        if (res.ok) return res.json();
+        // Handle 403 Forbidden and 404 Not Found
+        let errorMsg = 'Appointment not found or you do not have access.';
+        if (res.status === 403) errorMsg = 'You do not have permission to join this call. Please log in as the correct user.';
+        if (res.status === 404) errorMsg = 'Appointment not found.';
+        throw new Error(errorMsg);
+      })
+      .then(data => {
+        setAppointment({
+          id: data._id || data.id,
+          doctorName: data.doctor?.name || '',
+          specialty: data.doctor?.specialty || '',
+          date: new Date(data.slot).toLocaleDateString(),
+          time: new Date(data.slot).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+          status: data.status,
+          notes: data.notes,
+          prescription: data.prescription || [],
+        });
+        setLoading(false);
+      })
+      .catch((err: Error) => {
+        setFetchError(err.message);
+        setLoading(false);
+      });
+  }, [id, authToken]);
 
   useEffect(() => {
     const getMedia = async () => {
@@ -97,15 +95,13 @@ const VideoCallPage: React.FC<VideoCallPageProps> = ({ appointments, token }) =>
   }, []);
 
   useEffect(() => {
-    if (!appointment || !token) return;
-    console.log('[VideoCallPage] Connecting to Socket.io with token:', token);
-    const socket = io(SOCKET_URL, { auth: { token } });
+    if (!appointment || !authToken) return;
+    const socket = io(SOCKET_URL, { auth: { token: authToken } });
     socketRef.current = socket;
     socket.on('connect', () => {
       socket.emit('join', { appointmentId: appointment.id });
     });
     socket.on('connect_error', (err) => {
-      console.error('[VideoCallPage] Socket.io connect_error:', err.message);
       setError('Socket connection failed: ' + err.message);
     });
     socket.on('signal', async ({ from, data }) => {
@@ -122,7 +118,7 @@ const VideoCallPage: React.FC<VideoCallPageProps> = ({ appointments, token }) =>
       }
     });
     return () => { socket.disconnect(); };
-  }, [appointment, token]);
+  }, [appointment, authToken]);
 
   const toggleCamera = () => {
      if (streamRef.current) {
@@ -161,7 +157,8 @@ const VideoCallPage: React.FC<VideoCallPageProps> = ({ appointments, token }) =>
   };
 
   if (loading) return <div className="text-center py-20 text-white">Loading...</div>;
-  if (fetchError || !appointment) return <Navigate to="/dashboard" replace />;
+  if (fetchError) return <div className="text-center py-20 text-red-500 text-lg font-semibold">{fetchError}</div>;
+  if (!appointment) return <Navigate to="/dashboard" replace />;
 
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
@@ -192,7 +189,7 @@ const VideoCallPage: React.FC<VideoCallPageProps> = ({ appointments, token }) =>
 
       {/* Chat UI below video */}
       <div className="w-full max-w-4xl mt-8">
-        <ChatBox appointmentId={String(appointment.id)} token={token} />
+        <ChatBox appointmentId={String(appointment.id)} token={authToken!} />
       </div>
 
       <div className="absolute bottom-8 flex items-center gap-4 bg-slate-800/50 backdrop-blur-md p-4 rounded-full shadow-lg">
