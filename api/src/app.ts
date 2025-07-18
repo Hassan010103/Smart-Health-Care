@@ -19,7 +19,13 @@ const app = express();
 
 // Middleware
 app.use(express.json());
-app.use(cors());
+app.use(cors({
+  origin: [
+    "http://localhost:5173", // local dev
+    "https://smart-health-care-virid.vercel.app" // deployed Vercel frontend
+  ],
+  credentials: true
+}));
 app.use(helmet());
 
 // Global logging middleware for all requests
